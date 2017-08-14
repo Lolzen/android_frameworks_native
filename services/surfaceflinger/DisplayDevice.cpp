@@ -33,6 +33,14 @@
 
 #include <gui/Surface.h>
 
+#ifdef BOARD_EGL_NEEDS_LEGACY_FB
+#include <ui/FramebufferNativeWindow.h>
+#endif
+
+#include <GLES/gl.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+
 #include <hardware/gralloc.h>
 
 #include "DisplayHardware/DisplaySurface.h"
@@ -99,13 +107,19 @@ DisplayDevice::DisplayDevice(
       mPageFlipCount(),
       mIsSecure(isSecure),
       mLayerStack(NO_LAYER_STACK),
+      mHardwareOrientation(0),
       mOrientation(),
       mPowerMode(HWC_POWER_MODE_OFF),
       mActiveConfig(0)
 {
     Surface* surface;
+    mNativeWindow = new Surface(producer, false);
+#ifndef BOARD_EGL_NEEDS_LEGACY_FB
     mNativeWindow = surface = new Surface(producer, false);
     ANativeWindow* const window = mNativeWindow.get();
+#else
+    ANativeWindow* const window = new FramebufferNativeWindow();
+#endif
 
     /*
      * Create our display's surface
@@ -152,7 +166,12 @@ DisplayDevice::DisplayDevice(
     // was created with createDisplay().
     switch (mType) {
         case DISPLAY_PRIMARY:
+            char value[PROPERTY_VALUE_MAX];
             mDisplayName = "Built-in Screen";
+
+            /* hwrotation applies only to the primary display */
+            property_get("ro.sf.hwrotation", value, "0");
+            mHardwareOrientation = atoi(value);
             break;
         case DISPLAY_EXTERNAL:
             mDisplayName = "HDMI Screen";
@@ -162,8 +181,19 @@ DisplayDevice::DisplayDevice(
             break;
     }
 
+    char property[PROPERTY_VALUE_MAX];
+    int panelOrientation = DisplayState::eOrientationDefault;
+    // Set the panel orientation from the property.
+    property_get("persist.panel.orientation", property, "0");
+    panelOrientation = atoi(property) / 90;
+
+    mPanelMountFlip = 0;
+    // 1: H-Flip, 2: V-Flip, 3: 180 (HV Flip)
+    property_get("persist.panel.mountflip", property, "0");
+    mPanelMountFlip = atoi(property);
+
     // initialize the display orientation transform.
-    setProjection(DisplayState::eOrientationDefault, mViewport, mFrame);
+    setProjection(panelOrientation, mViewport, mFrame);
 
 #ifdef NUM_FRAMEBUFFER_SURFACE_BUFFERS
     surface->allocateBuffers();
@@ -446,6 +476,18 @@ status_t DisplayDevice::orientationToTransfrom(
         int orientation, int w, int h, Transform* tr)
 {
     uint32_t flags = 0;
+    int additionalRot = this->getHardwareOrientation();
+
+    if (additionalRot) {
+        additionalRot /= 90;
+        if (orientation == DisplayState::eOrientationUnchanged) {
+            orientation = additionalRot;
+        } else {
+            orientation += additionalRot;
+            orientation %= 4;
+        }
+    }
+
     switch (orientation) {
     case DisplayState::eOrientationDefault:
         flags = Transform::ROT_0;
@@ -462,6 +504,11 @@ status_t DisplayDevice::orientationToTransfrom(
     default:
         return BAD_VALUE;
     }
+
+    if (DISPLAY_PRIMARY == mHwcDisplayId) {
+        flags = flags ^ getPanelMountFlip();
+    }
+
     tr->set(flags, w, h);
     return NO_ERROR;
 }
@@ -501,7 +548,11 @@ void DisplayDevice::setProjection(int orientation,
     if (!frame.isValid()) {
         // the destination frame can be invalid if it has never been set,
         // in that case we assume the whole display frame.
-        frame = Rect(w, h);
+        if ((mHardwareOrientation/90) & DisplayState::eOrientationSwapMask) {
+            frame = Rect(h, w);
+        } else {
+            frame = Rect(w, h);
+        }
     }
 
     if (viewport.isEmpty()) {
@@ -574,6 +625,9 @@ void DisplayDevice::setProjection(int orientation,
     mFrame = frame;
 }
 
+int DisplayDevice::getHardwareOrientation() {
+    return mHardwareOrientation;
+}
 uint32_t DisplayDevice::getPrimaryDisplayOrientationTransform() {
     return sPrimaryDisplayOrientation;
 }

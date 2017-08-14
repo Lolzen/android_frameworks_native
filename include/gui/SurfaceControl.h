@@ -63,6 +63,9 @@ public:
     status_t    setLayerStack(uint32_t layerStack);
     status_t    setLayer(uint32_t layer);
     status_t    setPosition(float x, float y);
+#ifdef USES_LEGACY_SET_POSITION
+    status_t    setPosition(int32_t x, int32_t y);
+#endif
     status_t    setSize(uint32_t w, uint32_t h);
     status_t    hide();
     status_t    show();
@@ -72,6 +75,7 @@ public:
     status_t    setMatrix(float dsdx, float dtdx, float dsdy, float dtdy);
     status_t    setCrop(const Rect& crop);
     status_t    setFinalCrop(const Rect& crop);
+    status_t    setColor(uint32_t color);
 
     // If the size changes in this transaction, position updates specified
     // in this transaction will not complete until a buffer of the new size

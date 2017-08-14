@@ -505,6 +505,7 @@ void SurfaceFlinger::init() {
 
 void SurfaceFlinger::startBootAnim() {
     // start boot animation
+    mBootFinished = false;
     property_set("service.bootanim.exit", "0");
     property_set("ctl.start", "bootanim");
 }
@@ -598,10 +599,19 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
             info.orientation = 0;
         }
 
-        info.w = hwConfig->getWidth();
-        info.h = hwConfig->getHeight();
-        info.xdpi = xdpi;
-        info.ydpi = ydpi;
+        int additionalRot = mDisplays[0]->getHardwareOrientation() / 90;
+        if ((type == DisplayDevice::DISPLAY_PRIMARY) && (additionalRot & DisplayState::eOrientationSwapMask)) {
+            info.h = hwConfig->getWidth();
+            info.w = hwConfig->getHeight();
+            info.xdpi = ydpi;
+            info.ydpi = xdpi;
+        }
+        else {
+            info.w = hwConfig->getWidth();
+            info.h = hwConfig->getHeight();
+            info.xdpi = xdpi;
+            info.ydpi = ydpi;
+        }
         info.fps = 1e9 / hwConfig->getVsyncPeriod();
         info.appVsyncOffset = VSYNC_EVENT_PHASE_OFFSET_NS;
 
@@ -1433,8 +1443,14 @@ void SurfaceFlinger::handleTransactionLocked(uint32_t transactionFlags)
                                 || (state.viewport != draw[i].viewport)
                                 || (state.frame != draw[i].frame))
                         {
-                            disp->setProjection(state.orientation,
-                                    state.viewport, state.frame);
+                            // Honor the orientation change after boot
+                            // animation completes or the new orientation is
+                            // same as panel orientation..
+                            if(mBootFinished ||
+                               state.orientation == disp->getOrientation()) {
+                                disp->setProjection(state.orientation,
+                                        state.viewport, state.frame);
+                            }
                         }
                         if (state.width != draw[i].width || state.height != draw[i].height) {
                             disp->setDisplaySize(state.width, state.height);
@@ -1946,7 +1962,8 @@ bool SurfaceFlinger::doComposeSurfaces(
         }
 
         // Never touch the framebuffer if we don't have any framebuffer layers
-        const bool hasDeviceComposition = mHwc->hasDeviceComposition(hwcId);
+        const bool hasDeviceComposition = mHwc->hasDeviceComposition(hwcId) ||
+                isS3DLayerPresent(displayDevice);
         if (hasDeviceComposition) {
             // when using overlays, we assume a fully transparent framebuffer
             // NOTE: we could reduce how much we need to clear, for instance
@@ -3266,7 +3283,7 @@ status_t SurfaceFlinger::captureScreen(const sp<IBinder>& display,
                 uint32_t minLayerZ, uint32_t maxLayerZ,
                 bool useIdentityTransform,
                 Transform::orientation_flags rotation,
-                bool isLocalScreenshot)
+                bool isLocalScreenshot,
             : flinger(flinger), display(display), producer(producer),
               sourceCrop(sourceCrop), reqWidth(reqWidth), reqHeight(reqHeight),
               minLayerZ(minLayerZ), maxLayerZ(maxLayerZ),
@@ -3382,7 +3399,7 @@ status_t SurfaceFlinger::captureScreenImplLocked(
         Rect sourceCrop, uint32_t reqWidth, uint32_t reqHeight,
         uint32_t minLayerZ, uint32_t maxLayerZ,
         bool useIdentityTransform, Transform::orientation_flags rotation,
-        bool isLocalScreenshot)
+        bool isLocalScreenshot,
 {
     ATRACE_CALL();
 

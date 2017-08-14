@@ -1,4 +1,8 @@
 /*
+ * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Not a Contribution
+ *
+ *
  * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,6 +116,11 @@ status_t SurfaceControl::setPosition(float x, float y) {
     if (err < 0) return err;
     return mClient->setPosition(mHandle, x, y);
 }
+#ifdef USES_LEGACY_SET_POSITION
+status_t SurfaceControl::setPosition(int32_t x, int32_t y) {
+    return setPosition((float)x, (float)y);
+}
+#endif
 status_t SurfaceControl::setPositionAppliesWithResize() {
     status_t err = validate();
     if (err < 0) return err;
@@ -161,6 +170,11 @@ status_t SurfaceControl::setFinalCrop(const Rect& crop) {
     status_t err = validate();
     if (err < 0) return err;
     return mClient->setFinalCrop(mHandle, crop);
+}
+status_t SurfaceControl::setColor(uint32_t color) {
+    status_t err = validate();
+    if (err < 0) return err;
+    return mClient->setColor(mHandle, color);
 }
 
 status_t SurfaceControl::deferTransactionUntil(sp<IBinder> handle,

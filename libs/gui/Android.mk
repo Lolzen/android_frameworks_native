@@ -83,7 +83,6 @@ LOCAL_SHARED_LIBRARIES := \
 	libutils \
 	liblog
 
-
 LOCAL_MODULE := libgui
 
 ifeq ($(TARGET_BOARD_PLATFORM), tegra)
@@ -91,6 +90,9 @@ ifeq ($(TARGET_BOARD_PLATFORM), tegra)
 endif
 ifeq ($(TARGET_BOARD_PLATFORM), tegra3)
 	LOCAL_CFLAGS += -DDONT_USE_FENCE_SYNC
+endif
+ifeq ($(BOARD_USES_LEGACY_SET_POSITION),true)
+	LOCAL_CFLAGS += -DUSES_LEGACY_SET_POSITION
 endif
 
 include $(BUILD_SHARED_LIBRARY)
