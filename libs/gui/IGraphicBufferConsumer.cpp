@@ -51,10 +51,7 @@ enum {
     SET_CONSUMER_USAGE_BITS,
     SET_TRANSFORM_HINT,
     GET_SIDEBAND_STREAM,
-<<<<<<< HEAD
-=======
     GET_OCCUPANCY_HISTORY,
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
     DISCARD_FREE_BUFFERS,
     DUMP,
 };
@@ -265,8 +262,6 @@ public:
         return stream;
     }
 
-<<<<<<< HEAD
-=======
     virtual status_t getOccupancyHistory(bool forceFlush,
             std::vector<OccupancyTracker::Segment>* outHistory) {
         Parcel data, reply;
@@ -292,7 +287,6 @@ public:
         return result;
     }
 
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
     virtual status_t discardFreeBuffers() {
         Parcel data, reply;
         data.writeInterfaceToken(IGraphicBufferConsumer::getInterfaceDescriptor());
@@ -457,8 +451,7 @@ status_t BnGraphicBufferConsumer::onTransact(
             }
             return NO_ERROR;
         }
-<<<<<<< HEAD
-=======
+
         case GET_OCCUPANCY_HISTORY: {
             CHECK_INTERFACE(IGraphicBufferConsumer, data, reply);
             bool forceFlush = false;
@@ -478,7 +471,6 @@ status_t BnGraphicBufferConsumer::onTransact(
             }
             return NO_ERROR;
         }
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
         case DISCARD_FREE_BUFFERS: {
             CHECK_INTERFACE(IGraphicBufferConsumer, data, reply);
             status_t result = discardFreeBuffers();

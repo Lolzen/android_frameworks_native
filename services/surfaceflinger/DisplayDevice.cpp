@@ -487,17 +487,11 @@ status_t DisplayDevice::orientationToTransfrom(
         int orientation, int w, int h, Transform* tr)
 {
     uint32_t flags = 0;
-<<<<<<< HEAD
-    int additionalRot = this->getHardwareOrientation();
-
-    if (additionalRot) {
-=======
     char value[PROPERTY_VALUE_MAX];
     property_get("ro.sf.hwrotation", value, "0");
     int additionalRot = atoi(value);
 
     if (additionalRot && mType == DISPLAY_PRIMARY) {
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
         additionalRot /= 90;
         if (orientation == DisplayState::eOrientationUnchanged) {
             orientation = additionalRot;
@@ -567,15 +561,11 @@ void DisplayDevice::setProjection(int orientation,
     if (!frame.isValid()) {
         // the destination frame can be invalid if it has never been set,
         // in that case we assume the whole display frame.
-<<<<<<< HEAD
-        if ((mHardwareOrientation/90) & DisplayState::eOrientationSwapMask) {
-=======
         char value[PROPERTY_VALUE_MAX];
         property_get("ro.sf.hwrotation", value, "0");
         int additionalRot = atoi(value);
 
         if (additionalRot == 90 || additionalRot == 270) {
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
             frame = Rect(h, w);
         } else {
             frame = Rect(w, h);

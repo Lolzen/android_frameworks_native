@@ -719,8 +719,6 @@ sp<NativeHandle> BufferQueueConsumer::getSidebandStream() const {
     return mCore->mSidebandStream;
 }
 
-<<<<<<< HEAD
-=======
 status_t BufferQueueConsumer::getOccupancyHistory(bool forceFlush,
         std::vector<OccupancyTracker::Segment>* outHistory) {
     Mutex::Autolock lock(mCore->mMutex);
@@ -728,7 +726,6 @@ status_t BufferQueueConsumer::getOccupancyHistory(bool forceFlush,
     return NO_ERROR;
 }
 
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
 status_t BufferQueueConsumer::discardFreeBuffers() {
     Mutex::Autolock lock(mCore->mMutex);
     mCore->discardFreeBuffersLocked();

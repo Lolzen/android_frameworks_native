@@ -612,13 +612,9 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
             info.orientation = 0;
         }
 
-<<<<<<< HEAD
-        int additionalRot = mDisplays[0]->getHardwareOrientation() / 90;
-=======
         char value[PROPERTY_VALUE_MAX];
         property_get("ro.sf.hwrotation", value, "0");
         int additionalRot = atoi(value) / 90;
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
         if ((type == DisplayDevice::DISPLAY_PRIMARY) && (additionalRot & DisplayState::eOrientationSwapMask)) {
             info.h = hwConfig->getWidth();
             info.w = hwConfig->getHeight();
@@ -3515,11 +3511,7 @@ status_t SurfaceFlinger::captureScreen(const sp<IBinder>& display,
                 uint32_t minLayerZ, uint32_t maxLayerZ,
                 bool useIdentityTransform,
                 Transform::orientation_flags rotation,
-<<<<<<< HEAD
-                bool isLocalScreenshot,
-=======
                 bool isLocalScreenshot, bool useReadPixels)
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
             : flinger(flinger), display(display), producer(producer),
               sourceCrop(sourceCrop), reqWidth(reqWidth), reqHeight(reqHeight),
               minLayerZ(minLayerZ), maxLayerZ(maxLayerZ),
@@ -3637,11 +3629,7 @@ status_t SurfaceFlinger::captureScreenImplLocked(
         Rect sourceCrop, uint32_t reqWidth, uint32_t reqHeight,
         uint32_t minLayerZ, uint32_t maxLayerZ,
         bool useIdentityTransform, Transform::orientation_flags rotation,
-<<<<<<< HEAD
-        bool isLocalScreenshot,
-=======
         bool isLocalScreenshot, bool useReadPixels)
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
 {
     ATRACE_CALL();
 

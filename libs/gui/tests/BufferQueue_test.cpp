@@ -854,8 +854,6 @@ TEST_F(BufferQueueTest, CanRetrieveLastQueuedBuffer) {
             returnedBuffer->getNativeBuffer()->handle);
 }
 
-<<<<<<< HEAD
-=======
 TEST_F(BufferQueueTest, TestOccupancyHistory) {
     createBufferQueue();
     sp<DummyConsumer> dc(new DummyConsumer);
@@ -992,7 +990,6 @@ TEST_F(BufferQueueTest, TestOccupancyHistory) {
     ASSERT_EQ(true, thirdSegment.usedThirdBuffer);
 }
 
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
 TEST_F(BufferQueueTest, TestDiscardFreeBuffers) {
     createBufferQueue();
     sp<DummyConsumer> dc(new DummyConsumer);

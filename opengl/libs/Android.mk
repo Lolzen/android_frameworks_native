@@ -45,13 +45,7 @@ LOCAL_CFLAGS += -fvisibility=hidden
 ifeq ($(BOARD_ALLOW_EGL_HIBERNATION),true)
   LOCAL_CFLAGS += -DBOARD_ALLOW_EGL_HIBERNATION
 endif
-<<<<<<< HEAD
-ifeq ($(BOARD_EGL_SYSTEMUI_PBSIZE_HACK),true)
-  # see Loader.cpp for details
-  LOCAL_CFLAGS += -DSYSTEMUI_PBSIZE_HACK=1
-endif
-=======
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
+
 ifeq ($(BOARD_EGL_WORKAROUND_BUG_10194508),true)
   LOCAL_CFLAGS += -DWORKAROUND_BUG_10194508
 endif

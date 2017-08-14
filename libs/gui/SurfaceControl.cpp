@@ -116,16 +116,8 @@ status_t SurfaceControl::setPosition(float x, float y) {
     if (err < 0) return err;
     return mClient->setPosition(mHandle, x, y);
 }
-<<<<<<< HEAD
-#ifdef USES_LEGACY_SET_POSITION
-status_t SurfaceControl::setPosition(int32_t x, int32_t y) {
-    return setPosition((float)x, (float)y);
-}
-#endif
-status_t SurfaceControl::setPositionAppliesWithResize() {
-=======
+
 status_t SurfaceControl::setGeometryAppliesWithResize() {
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
     status_t err = validate();
     if (err < 0) return err;
     return mClient->setGeometryAppliesWithResize(mHandle);

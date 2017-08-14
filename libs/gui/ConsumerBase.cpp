@@ -235,8 +235,6 @@ status_t ConsumerBase::setDefaultBufferDataSpace(
     return mConsumer->setDefaultBufferDataSpace(defaultDataSpace);
 }
 
-<<<<<<< HEAD
-=======
 status_t ConsumerBase::getOccupancyHistory(bool forceFlush,
         std::vector<OccupancyTracker::Segment>* outHistory) {
     Mutex::Autolock _l(mMutex);
@@ -247,7 +245,6 @@ status_t ConsumerBase::getOccupancyHistory(bool forceFlush,
     return mConsumer->getOccupancyHistory(forceFlush, outHistory);
 }
 
->>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
 status_t ConsumerBase::discardFreeBuffers() {
     Mutex::Autolock _l(mMutex);
     if (mAbandoned) {
