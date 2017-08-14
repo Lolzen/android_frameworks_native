@@ -46,6 +46,8 @@
 #include <cutils/log.h>
 #include <cutils/properties.h>
 
+#include <system/graphics.h>
+
 #include "HWComposer.h"
 
 #include "../Layer.h"           // needed only for debugging
@@ -117,6 +119,10 @@ HWComposer::HWComposer(
     int fberr = loadFbHalModule();
     loadHwcModule();
 
+#ifdef OMAP_ENHANCEMENT
+    // FB HAL must stay open independent of HWC API version. Closing FB HAL will
+    // result in destruction of flip chain and de-allocation of framebuffer.
+#else
     if (mFbDev && mHwc && hwcHasApiVersion(mHwc, HWC_DEVICE_API_VERSION_1_1)) {
         // close FB HAL if we don't needed it.
         // FIXME: this is temporary until we're not forced to open FB HAL
@@ -124,6 +130,7 @@ HWComposer::HWComposer(
         framebuffer_close(mFbDev);
         mFbDev = NULL;
     }
+#endif
 
     // If we have no HWC, or a pre-1.1 HWC, an FB dev is mandatory.
     if ((!mHwc || !hwcHasApiVersion(mHwc, HWC_DEVICE_API_VERSION_1_1))
@@ -172,7 +179,11 @@ HWComposer::HWComposer(
         }
     }
 
+#ifdef OMAP_ENHANCEMENT
+    if (!mHwc || !hwcHasApiVersion(mHwc, HWC_DEVICE_API_VERSION_1_1)) {
+#else
     if (mFbDev) {
+#endif
         ALOG_ASSERT(!(mHwc && hwcHasApiVersion(mHwc, HWC_DEVICE_API_VERSION_1_1)),
                 "should only have fbdev if no hwc or hwc is 1.0");
 
@@ -421,7 +432,7 @@ status_t HWComposer::queryDisplayProperties(int disp) {
                     config.ydpi = values[i] / 1000.0f;
                     break;
                 case HWC_DISPLAY_COLOR_TRANSFORM:
-                    config.colorTransform = values[i];
+                    config.colorMode = static_cast<android_color_mode_t>(values[i]);
                     break;
                 default:
                     ALOG_ASSERT(false, "unknown display attribute[%zu] %#x",
@@ -440,7 +451,12 @@ status_t HWComposer::queryDisplayProperties(int disp) {
     }
 
     // FIXME: what should we set the format to?
+#ifdef OMAP_ENHANCEMENT
+    // Use pixel format native to DSS HW
+    mDisplayData[disp].format = HAL_PIXEL_FORMAT_BGRA_8888;
+#else
     mDisplayData[disp].format = HAL_PIXEL_FORMAT_RGBA_8888;
+#endif
     mDisplayData[disp].connected = true;
     return NO_ERROR;
 }
@@ -535,6 +551,11 @@ float HWComposer::getDpiY(int disp) const {
 nsecs_t HWComposer::getRefreshPeriod(int disp) const {
     size_t currentConfig = mDisplayData[disp].currentConfig;
     return mDisplayData[disp].configs[currentConfig].refresh;
+}
+
+android_color_mode_t HWComposer::getColorMode(int disp) const {
+    size_t currentConfig = mDisplayData[disp].currentConfig;
+    return mDisplayData[disp].configs[currentConfig].colorMode;
 }
 
 const Vector<HWComposer::DisplayConfig>& HWComposer::getConfigs(int disp) const {
@@ -882,7 +903,12 @@ int HWComposer::getVisualID() const {
         // FIXME: temporary hack until HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED
         // is supported by the implementation. we can only be in this case
         // if we have HWC 1.1
+#ifdef OMAP_ENHANCEMENT
+        // Use pixel format native to DSS HW
+        return HAL_PIXEL_FORMAT_BGRA_8888;
+#else
         return HAL_PIXEL_FORMAT_RGBA_8888;
+#endif
         //return HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED;
     } else {
         return mFbDev->format;
@@ -1042,7 +1068,6 @@ public:
         }
     }
     virtual void setDim(uint32_t color) {
-        setSkip(false);
         getLayer()->flags |= 0x80000000;
 #ifdef QTI_BSP
         // Set RGBA color on HWC Dim layer
@@ -1123,7 +1148,7 @@ public:
     virtual void setBuffer(const sp<GraphicBuffer>& buffer) {
         if (buffer == 0 || buffer->handle == 0) {
             getLayer()->compositionType = HWC_FRAMEBUFFER;
-            getLayer()->flags |= HWC_SKIP_LAYER;
+            getLayer()->flags |=  (getLayer()->flags & 0x80000000) ? 0 : HWC_SKIP_LAYER;
             getLayer()->handle = 0;
         } else {
             if (getLayer()->compositionType == HWC_SIDEBAND) {
@@ -1243,10 +1268,10 @@ void HWComposer::dump(String8& result) const {
             for (size_t c = 0; c < disp.configs.size(); ++c) {
                 const DisplayConfig& config(disp.configs[c]);
                 result.appendFormat("    %s%zd: %ux%u, xdpi=%f, ydpi=%f"
-                        ", refresh=%" PRId64 ", colorTransform=%d\n",
+                        ", refresh=%" PRId64 ", colorMode=%d\n",
                         c == disp.currentConfig ? "* " : "", c,
                         config.width, config.height, config.xdpi, config.ydpi,
-                        config.refresh, config.colorTransform);
+                        config.refresh, config.colorMode);
             }
 
             if (disp.list) {
@@ -1314,7 +1339,7 @@ void HWComposer::dump(String8& result) const {
     }
 
     if (mHwc && mHwc->dump) {
-        const size_t SIZE = 4096;
+        const size_t SIZE = 16*1024;
         char buffer[SIZE];
         mHwc->dump(mHwc, buffer, SIZE);
         result.append(buffer);

@@ -260,6 +260,7 @@ status_t BufferQueueConsumer::acquireBuffer(BufferItem* outBuffer,
         mCore->mDequeueCondition.broadcast();
 
         ATRACE_INT(mCore->mConsumerName.string(), mCore->mQueue.size());
+        mCore->mOccupancyTracker.registerOccupancyChange(mCore->mQueue.size());
 
         VALIDATE_CONSISTENCY();
     }
@@ -714,9 +715,20 @@ status_t BufferQueueConsumer::setTransformHint(uint32_t hint) {
 }
 
 sp<NativeHandle> BufferQueueConsumer::getSidebandStream() const {
+    Mutex::Autolock lock(mCore->mMutex);
     return mCore->mSidebandStream;
 }
 
+<<<<<<< HEAD
+=======
+status_t BufferQueueConsumer::getOccupancyHistory(bool forceFlush,
+        std::vector<OccupancyTracker::Segment>* outHistory) {
+    Mutex::Autolock lock(mCore->mMutex);
+    *outHistory = mCore->mOccupancyTracker.getSegmentHistory(forceFlush);
+    return NO_ERROR;
+}
+
+>>>>>>> 90bbb802e74810d63c8a872159fb2641cd620bb4
 status_t BufferQueueConsumer::discardFreeBuffers() {
     Mutex::Autolock lock(mCore->mMutex);
     mCore->discardFreeBuffersLocked();
